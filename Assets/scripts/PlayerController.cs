@@ -5,11 +5,12 @@ using UnityEngine;
 public class PlayerMotor : MonoBehaviour
 {
     [SerializeField] private CipherStats stats;
-    [SerializeField] private Transform cameraTransform;
+    [SerializeField] private Transform cameraRoot;
 
     [SerializeField] private LayerMask vaultLayer;
     [SerializeField] private float vaultRayDistance = 1.2f;
     [SerializeField] private float vaultHeight = 1.2f;
+    [SerializeField] private float rotationSpeed = 15f;
 
     private CharacterController controller;
     private Vector3 velocity;
@@ -23,9 +24,9 @@ public class PlayerMotor : MonoBehaviour
     {
         controller = GetComponent<CharacterController>();
 
-        if (cameraTransform == null && Camera.main != null)
+        if (cameraRoot == null && Camera.main != null)
         {
-            cameraTransform = Camera.main.transform;
+            cameraRoot = Camera.main.transform;
         }
     }
 
@@ -53,14 +54,14 @@ public class PlayerMotor : MonoBehaviour
     {
         float horizontal = Input.GetAxisRaw("Horizontal");
         float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 direction = new Vector3(horizontal, 0f, vertical).normalized;
+        Vector3 inputDir = new Vector3(horizontal, 0f, vertical).normalized;
 
-        if (direction.magnitude >= 0.1f)
+        if (inputDir.magnitude >= 0.1f)
         {
-            float targetAngle = Mathf.Atan2(direction.x, direction.z) * Mathf.Rad2Deg + cameraTransform.eulerAngles.y;
-            transform.rotation = Quaternion.Euler(0f, targetAngle, 0f);
-
-            Vector3 moveDirection = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg + cameraRoot.eulerAngles.y;
+            float angle = Mathf.LerpAngle(transform.eulerAngles.y, targetAngle, Time.deltaTime * rotationSpeed);
+            
+            transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
             float currentSpeed = stats.WalkSpeed;
             CurrentSpeedPercent = 0.5f;
@@ -76,7 +77,8 @@ public class PlayerMotor : MonoBehaviour
                 CurrentSpeedPercent = 0.5f;
             }
 
-            controller.Move(moveDirection.normalized * currentSpeed * Time.deltaTime);
+            Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
+            controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
         }
         else
         {
