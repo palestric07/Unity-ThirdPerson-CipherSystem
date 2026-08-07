@@ -8,7 +8,10 @@ public class AISensor : MonoBehaviour
     {
         if (other.CompareTag(targetTag))
         {
-            Debug.Log($"[AI SENSOR] Player Detected! Target entered detection radius: {other.name}");
+            if (HUDManager.Instance != null)
+            {
+                HUDManager.Instance.TriggerAlert(true);
+            }
         }
     }
 
@@ -16,7 +19,10 @@ public class AISensor : MonoBehaviour
     {
         if (other.CompareTag(targetTag))
         {
-            Debug.Log($"[AI SENSOR] Player Lost! Target exited detection radius: {other.name}");
+            if (HUDManager.Instance != null)
+            {
+                HUDManager.Instance.TriggerAlert(false);
+            }
         }
     }
 }

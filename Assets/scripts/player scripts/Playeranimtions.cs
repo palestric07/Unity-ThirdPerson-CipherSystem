@@ -5,7 +5,7 @@ public class PlayerAnimator : MonoBehaviour
     [SerializeField] private PlayerMotor motor;
     [SerializeField] private Animator animator;
 
-    private void Start()
+    private void Awake()
     {
         if (motor == null)
         {
@@ -22,10 +22,11 @@ public class PlayerAnimator : MonoBehaviour
     {
         if (animator == null || motor == null) return;
 
-        animator.SetFloat("Speed", motor.CurrentSpeedPercent);
-        animator.SetBool("IsCrouching", motor.IsCrouching);
+        float speed = motor.currentSpeedPercent;
+        animator.SetFloat("Speed", speed);
+        animator.SetBool("IsCrouching", motor.isCrouching);
 
-        if (Input.GetButtonDown("Jump") && motor.IsGrounded && !motor.IsCrouching)
+        if (Input.GetButtonDown("Jump") && motor.isGrounded && !motor.isCrouching)
         {
             animator.SetTrigger("Jump");
         }

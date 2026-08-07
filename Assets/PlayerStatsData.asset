@@ -13,7 +13,7 @@ MonoBehaviour:
   m_Name: PlayerStatsData
   m_EditorClassIdentifier: Assembly-CSharp::CipherStats
   walkSpeed: 5
-  sprintSpeed: 9
+  sprintSpeed: 11
   crouchSpeed: 2.5
   gravity: -9.81
   jumpHeight: 1.2

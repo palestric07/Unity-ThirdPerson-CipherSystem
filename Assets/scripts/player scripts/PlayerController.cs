@@ -1,7 +1,6 @@
 using System.Collections;
 using UnityEngine;
 
-[RequireComponent(typeof(CharacterController))]
 public class PlayerMotor : MonoBehaviour
 {
     [SerializeField] private CipherStats stats;
@@ -14,11 +13,11 @@ public class PlayerMotor : MonoBehaviour
 
     private CharacterController controller;
     private Vector3 velocity;
-    
-    public bool IsGrounded { get; private set; }
-    public bool IsCrouching { get; private set; }
-    public bool IsVaulting { get; private set; }
-    public float CurrentSpeedPercent { get; private set; }
+
+    public bool isGrounded;
+    public bool isCrouching;
+    public bool isVaulting;
+    public float currentSpeedPercent;
 
     private void Start()
     {
@@ -32,19 +31,19 @@ public class PlayerMotor : MonoBehaviour
 
     private void Update()
     {
-        if (IsVaulting) return;
+        if (isVaulting) return;
 
-        HandleGrounded();
+        CheckGrounded();
         HandleMovement();
         HandleJump();
         HandleCrouch();
         HandleVault();
     }
 
-    private void HandleGrounded()
+    private void CheckGrounded()
     {
-        IsGrounded = controller.isGrounded;
-        if (IsGrounded && velocity.y < 0)
+        isGrounded = controller.isGrounded;
+        if (isGrounded && velocity.y < 0)
         {
             velocity.y = -2f;
         }
@@ -52,37 +51,37 @@ public class PlayerMotor : MonoBehaviour
 
     private void HandleMovement()
     {
-        float horizontal = Input.GetAxisRaw("Horizontal");
-        float vertical = Input.GetAxisRaw("Vertical");
-        Vector3 inputDir = new Vector3(horizontal, 0f, vertical).normalized;
+        float x = Input.GetAxisRaw("Horizontal");
+        float z = Input.GetAxisRaw("Vertical");
+        Vector3 dir = new Vector3(x, 0f, z).normalized;
 
-        if (inputDir.magnitude >= 0.1f)
+        if (dir.magnitude >= 0.1f)
         {
-            float targetAngle = Mathf.Atan2(inputDir.x, inputDir.z) * Mathf.Rad2Deg + cameraRoot.eulerAngles.y;
+            float targetAngle = Mathf.Atan2(dir.x, dir.z) * Mathf.Rad2Deg + cameraRoot.eulerAngles.y;
             float angle = Mathf.LerpAngle(transform.eulerAngles.y, targetAngle, Time.deltaTime * rotationSpeed);
-            
+
             transform.rotation = Quaternion.Euler(0f, angle, 0f);
 
-            float currentSpeed = stats.WalkSpeed;
-            CurrentSpeedPercent = 0.5f;
+            float speed = stats.WalkSpeed;
+            currentSpeedPercent = 0.5f;
 
-            if (Input.GetKey(KeyCode.LeftShift) && !IsCrouching)
+            if (Input.GetKey(KeyCode.LeftShift) && !isCrouching)
             {
-                currentSpeed = stats.SprintSpeed;
-                CurrentSpeedPercent = 1.0f;
+                speed = stats.SprintSpeed;
+                currentSpeedPercent = 1f;
             }
-            else if (IsCrouching)
+            else if (isCrouching)
             {
-                currentSpeed = stats.CrouchSpeed;
-                CurrentSpeedPercent = 0.5f;
+                speed = stats.CrouchSpeed;
+                currentSpeedPercent = 0.5f;
             }
 
             Vector3 moveDir = Quaternion.Euler(0f, targetAngle, 0f) * Vector3.forward;
-            controller.Move(moveDir.normalized * currentSpeed * Time.deltaTime);
+            controller.Move(moveDir.normalized * speed * Time.deltaTime);
         }
         else
         {
-            CurrentSpeedPercent = 0f;
+            currentSpeedPercent = 0f;
         }
 
         velocity.y += stats.Gravity * Time.deltaTime;
@@ -91,7 +90,7 @@ public class PlayerMotor : MonoBehaviour
 
     private void HandleJump()
     {
-        if (Input.GetButtonDown("Jump") && IsGrounded && !IsCrouching)
+        if (Input.GetButtonDown("Jump") && isGrounded && !isCrouching)
         {
             velocity.y = Mathf.Sqrt(stats.JumpHeight * -2f * stats.Gravity);
         }
@@ -101,13 +100,13 @@ public class PlayerMotor : MonoBehaviour
     {
         if (Input.GetKeyDown(KeyCode.C))
         {
-            IsCrouching = !IsCrouching;
+            isCrouching = !isCrouching;
         }
     }
 
     private void HandleVault()
     {
-        if (Input.GetKeyDown(KeyCode.E) && IsGrounded && !IsCrouching)
+        if (Input.GetKeyDown(KeyCode.E) && isGrounded && !isCrouching)
         {
             Vector3 lowerOrigin = transform.position + Vector3.up * 0.2f;
             Vector3 upperOrigin = transform.position + Vector3.up * vaultHeight;
@@ -116,29 +115,29 @@ public class PlayerMotor : MonoBehaviour
             {
                 if (!Physics.Raycast(upperOrigin, transform.forward, vaultRayDistance, vaultLayer))
                 {
-                    StartCoroutine(PerformVault());
+                    StartCoroutine(VaultRoutine());
                 }
             }
         }
     }
 
-    private IEnumerator PerformVault()
+    private IEnumerator VaultRoutine()
     {
-        IsVaulting = true;
-        Vector3 vaultTargetPosition = transform.position + transform.forward * 1.5f + Vector3.up * 1f;
-        float elapsedTime = 0f;
-        float duration = 0.4f;
-
+        isVaulting = true;
+        Vector3 targetPos = transform.position + transform.forward * 1.5f + Vector3.up * 1f;
         Vector3 startPos = transform.position;
 
-        while (elapsedTime < duration)
+        float timer = 0f;
+        float duration = 0.4f;
+
+        while (timer < duration)
         {
-            transform.position = Vector3.Lerp(startPos, vaultTargetPosition, elapsedTime / duration);
-            elapsedTime += Time.deltaTime;
+            transform.position = Vector3.Lerp(startPos, targetPos, timer / duration);
+            timer += Time.deltaTime;
             yield return null;
         }
 
-        transform.position = vaultTargetPosition;
-        IsVaulting = false;
+        transform.position = targetPos;
+        isVaulting = false;
     }
 }
